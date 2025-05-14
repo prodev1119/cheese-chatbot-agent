@@ -11,7 +11,7 @@ COLLECTION_NAME = "cheeses"
 PINECONE_API_KEY = "pcsk_22wZ3E_7iwmHQNLfKwwAbb6nM36KdQ69mJR3Dh6JdNVCPRLdPUPBT3wKKNdfkwrUHsDBog"
 PINECONE_ENV = "us-east-1"
 PINECONE_INDEX = "cheese-products"
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # --- Initialize searchers and agent ---
 mongo_search = MongoCheeseSearch(MONGO_URI, DB_NAME, COLLECTION_NAME)
