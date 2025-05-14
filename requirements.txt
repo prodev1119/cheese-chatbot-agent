@@ -1,0 +1,7 @@
+langgraph
+openai
+pymongo
+pinecone-client
+streamlit
+tqdm
+pinecone
