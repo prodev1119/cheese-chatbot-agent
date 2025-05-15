@@ -1,10 +1,10 @@
+import os
 import streamlit as st
 from agent.langgraph_agent import build_cheese_agent
 from agent.mongo_search import MongoCheeseSearch
 from agent.pinecone_search import PineconeCheeseSearch
-import os
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # --- Set up your keys and configs here ---
@@ -175,7 +175,6 @@ if user_input:
                             # st.write(f"Case Weight: {CaseWeight}")
                             # st.write(f"Each Count: {EachCount}")
                             # st.write(f"Case Count: {CaseCount}")
-
                             if product_url:
                                 st.markdown(f"[Product Link]({product_url})")
                             st.markdown("---")

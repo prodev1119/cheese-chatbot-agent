@@ -2,7 +2,6 @@ import json
 import re
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List, Any, Literal
-import openai
 from openai import OpenAI
 
 # Updated state definition

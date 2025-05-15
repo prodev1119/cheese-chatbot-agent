@@ -1,6 +1,6 @@
+import os
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure
-import os
 
 class MongoCheeseSearch:
     def __init__(self, uri, db_name, collection_name):

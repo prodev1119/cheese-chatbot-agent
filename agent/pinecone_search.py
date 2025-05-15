@@ -1,6 +1,5 @@
 import openai
 from pinecone import Pinecone
-import os
 
 class PineconeCheeseSearch:
     def __init__(self, api_key, env, index_name, openai_api_key):
