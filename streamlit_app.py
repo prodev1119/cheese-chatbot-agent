@@ -8,12 +8,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Set up your keys and configs here ---
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-DB_NAME = os.getenv("DB_NAME", "cheese_db")
-COLLECTION_NAME = os.getenv("COLLECTION_NAME", "cheeses")
+MONGO_URI = os.getenv("MONGO_URI")
+DB_NAME = os.getenv("DB_NAME")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-# PINECONE_ENV = os.getenv("PINECONE_ENV") # Pinecone client doesn't use PINECONE_ENV directly in new versions
-PINECONE_INDEX = os.getenv("PINECONE_INDEX_NAME", "cheese-products") # Ensure this matches your index name on Pinecone
+PINECONE_INDEX = os.getenv("PINECONE_INDEX_NAME") # Ensure this matches your index name on Pinecone
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # --- Initialize searchers and agent ---
