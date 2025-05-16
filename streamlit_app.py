@@ -1,6 +1,5 @@
 import os
 from PIL import Image
-from turtle import color
 import streamlit as st
 from agent.langgraph_agent import build_cheese_agent
 from agent.mongo_search import MongoCheeseSearch
