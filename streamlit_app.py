@@ -37,6 +37,66 @@ cheese_agent = build_cheese_agent(mongo_search, pinecone_search, OPENAI_API_KEY)
 # mermaid_code = cheese_agent.get_graph().draw_mermaid()
 # print(mermaid_code) # You can use this output with a Mermaid renderer to create graph.png
 
+# --- Helper function to display product details ---
+def display_product_details(cheese):
+    title = cheese.get("title", "No Title")
+    text = cheese.get("text", "No product description available.")
+    image_url = cheese.get("image_url")
+    product_url = cheese.get("product_url")
+    sku = cheese.get("sku")
+    PriceOrder = cheese.get("priceOrder")
+    PopularityOrder = cheese.get("popularityOrder")
+    Category = cheese.get("category")
+    Brand = cheese.get("brand")
+    PricePerLB = cheese.get("price_per_lb")
+    PricePerCT = cheese.get("price_per_ct")
+    EachPrice = cheese.get("each_price")
+    CasePrice = cheese.get("case_price")
+    EachSize = cheese.get("each_dimensions")
+    CaseSize = cheese.get("case_dimensions")
+    EachWeight = cheese.get("each_weight")
+    CaseWeight = cheese.get("case_weight")
+    EachCount = cheese.get("each_count")
+    CaseCount = cheese.get("case_count")
+
+    # Display title and product link side-by-side
+    col1, col2 = st.columns([3, 1])
+
+    st.subheader(title)
+
+    if image_url:
+        st.image(image_url, width=150)
+
+    # Display details in rows
+    row1_col1, row1_col2, row1_col3, row1_col4 = st.columns(4)
+    row1_col1.write(f"SKU: {sku}")
+    row1_col2.write(f"Brand: {Brand}")
+    row1_col3.write(f"Price Per CT: {PricePerCT}")
+    row1_col4.write(f"Case Price: {CasePrice}")
+
+    row2_col1, row2_col2, row2_col3, row2_col4 = st.columns(4)
+    row2_col1.write(f"Price Order: {PriceOrder}")
+    row2_col2.write(f"Price Per LB: {PricePerLB}")
+    row2_col3.write(f"Each Price: {EachPrice}")
+    row2_col4.write(f"Case Size: {CaseSize}")
+
+    row3_col1, row3_col2, row3_col3, row3_col4 = st.columns(4)
+    row3_col1.write(f"Popularity Order: {PopularityOrder}")
+    row3_col2.write(f"Each Weight: {EachWeight}")
+    row3_col3.write(f"Case Count: {CaseCount}")
+    # row3_col4 is empty, to align with the image. Or add another detail if available.
+
+    row4_col1, row4_col2, row4_col3, row4_col4 = st.columns(4)
+    row4_col1.write(f"Category: {Category}")
+    row4_col2.write(f"Each Size: {EachSize}")
+    row4_col3.write(f"Case Weight: {CaseWeight}")
+    # row4_col4 is empty
+
+    st.write(text) # Description below details
+    if product_url:
+        st.markdown(f"[Product Link]({product_url})")
+    st.markdown("---")
+
 # Set page config
 st.set_page_config(
     page_title="Cheese Chatbot Agent",
@@ -78,48 +138,7 @@ for message in st.session_state.messages:
         if not is_aggregation_history and "products" in message and message["products"]:
             with st.expander("View Details of All Products"):
                 for cheese in message["products"]:
-                    title = cheese.get("title", "No Title")
-                    text = cheese.get("text", "No product description available.")
-                    image_url = cheese.get("image_url")
-                    product_url = cheese.get("product_url")
-                    sku = cheese.get("sku")
-                    PriceOrder = cheese.get("priceOrder")
-                    PopularityOrder = cheese.get("popularityOrder")
-                    Category = cheese.get("category")
-                    Brand = cheese.get("brand")
-                    PricePerLB = cheese.get("price_per_lb")
-                    PricePerCT = cheese.get("price_per_ct")
-                    EachPrice = cheese.get("each_price")
-                    CasePrice = cheese.get("case_price")
-                    EachSize = cheese.get("each_dimensions")
-                    CaseSize = cheese.get("case_dimensions")
-                    EachWeight = cheese.get("each_weight")
-                    CaseWeight = cheese.get("case_weight")
-                    EachCount = cheese.get("each_count")
-                    CaseCount = cheese.get("case_count")
-
-                    st.subheader(title)
-                    if image_url:
-                        st.image(image_url, width=150)
-                    st.write(text)
-                    st.write(f"SKU: {sku}")
-                    st.write(f"Price Order: {PriceOrder}")
-                    st.write(f"Popularity Order: {PopularityOrder}")
-                    st.write(f"Category: {Category}")
-                    st.write(f"Brand: {Brand}")
-                    st.write(f"Price Per LB: {PricePerLB}")
-                    st.write(f"Price Per CT: {PricePerCT}")
-                    st.write(f"Each Price: {EachPrice}")
-                    st.write(f"Case Price: {CasePrice}")
-                    st.write(f"Each Size: {EachSize}")
-                    st.write(f"Case Size: {CaseSize}")
-                    st.write(f"Each Weight: {EachWeight}")
-                    st.write(f"Case Weight: {CaseWeight}")
-                    st.write(f"Each Count: {EachCount}")
-                    st.write(f"Case Count: {CaseCount}")
-                    if product_url:
-                        st.markdown(f"[Product Link]({product_url})")
-                    st.markdown("---")
+                    display_product_details(cheese)
 
 # Get user input
 user_input = st.chat_input("Your question:")
@@ -171,48 +190,7 @@ if user_input:
                 if not is_aggregation_current and products_to_display:
                     with st.expander("View Details of All Products"):
                         for cheese in products_to_display:
-                            title = cheese.get("title", "No Title")
-                            text = cheese.get("text", "No product description available.")
-                            image_url = cheese.get("image_url")
-                            product_url = cheese.get("product_url")
-                            sku = cheese.get("sku")
-                            PriceOrder = cheese.get("priceOrder")
-                            PopularityOrder = cheese.get("popularityOrder")
-                            Category = cheese.get("category")
-                            Brand = cheese.get("brand")
-                            PricePerLB = cheese.get("price_per_lb")
-                            PricePerCT = cheese.get("price_per_ct")
-                            EachPrice = cheese.get("each_price")
-                            CasePrice = cheese.get("case_price")
-                            EachSize = cheese.get("each_dimensions")
-                            CaseSize = cheese.get("case_dimensions")
-                            EachWeight = cheese.get("each_weight")
-                            CaseWeight = cheese.get("case_weight")
-                            EachCount = cheese.get("each_count")
-                            CaseCount = cheese.get("case_count")
-
-                            st.subheader(title)
-                            if image_url:
-                                st.image(image_url, width=150)
-                            st.write(text)
-                            st.write(f"SKU: {sku}")
-                            st.write(f"Price Order: {PriceOrder}")
-                            st.write(f"Popularity Order: {PopularityOrder}")
-                            st.write(f"Category: {Category}")
-                            st.write(f"Brand: {Brand}")
-                            st.write(f"Price Per LB: {PricePerLB}")
-                            st.write(f"Price Per CT: {PricePerCT}")
-                            st.write(f"Each Price: {EachPrice}")
-                            st.write(f"Case Price: {CasePrice}")
-                            st.write(f"Each Size: {EachSize}")
-                            st.write(f"Case Size: {CaseSize}")
-                            st.write(f"Each Weight: {EachWeight}")
-                            st.write(f"Case Weight: {CaseWeight}")
-                            st.write(f"Each Count: {EachCount}")
-                            st.write(f"Case Count: {CaseCount}")
-                            if product_url:
-                                st.markdown(f"[Product Link]({product_url})")
-                            st.markdown("---")
+                            display_product_details(cheese)
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.session_state.messages.append({"role": "assistant", "content": f"Sorry, an error occurred: {e}"})

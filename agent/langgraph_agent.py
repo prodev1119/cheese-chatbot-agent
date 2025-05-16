@@ -32,7 +32,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that determines if a user's query is about cheese."},
+                {"role": "system", "content": "You are a helpful assistant that determines if a user's query is about cheese. If user's query is like:plz show me all products that are expensive than $50., then it is about cheese."},
                 {"role": "user", "content": prompt_content}
             ],
             max_tokens=10
