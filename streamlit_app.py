@@ -42,7 +42,7 @@ st.set_page_config(
 with st.sidebar:
     st.header("Agent Workflow Graph")
     try:
-        graph_image = Image.open("graph.png")
+        graph_image = Image.open("graph_2.png")
         st.image(graph_image, use_container_width=True,)
     except FileNotFoundError:
         st.warning("graph.png not found. Please generate it from the Mermaid code printed in the console.")
@@ -254,7 +254,7 @@ if user_input:
                             # st.write(f"Case Count: {CaseCount}")
                             if product_url:
                                 st.markdown(f"[Product Link]({product_url})")
-                            st.markdown("---")
+            st.markdown("---")
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.session_state.messages.append({"role": "assistant", "content": f"Sorry, an error occurred: {e}"})
