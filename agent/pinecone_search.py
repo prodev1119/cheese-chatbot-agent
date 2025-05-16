@@ -60,6 +60,6 @@ class PineconeCheeseSearch:
             for match in query_response['matches']:
                 if match.get('metadata'):
                     results_with_metadata.append(match['metadata'])
-        
+
         node_thinking_log.append(f"Pinecone Search: Found {len(results_with_metadata)} results.")
         return results_with_metadata, node_thinking_log # Return both results and the log

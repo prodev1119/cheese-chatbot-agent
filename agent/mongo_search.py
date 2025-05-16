@@ -1,7 +1,9 @@
 import os
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure
+from dotenv import load_dotenv
 
+load_dotenv()
 class MongoCheeseSearch:
     def __init__(self, uri, db_name, collection_name):
         self.client = MongoClient(uri)
@@ -82,25 +84,37 @@ class MongoCheeseSearch:
 
 # One-time setup or ensure index exists
 try:
-    setup_client = MongoClient(os.getenv("MONGO_URI"))
-    setup_db = setup_client[os.getenv("DB_NAME")]
-    setup_collection = setup_db[os.getenv("COLLECTION_NAME")]
+    mongo_uri = os.getenv("MONGO_URI")
+    db_name_env = os.getenv("DB_NAME")
+    collection_name_env = os.getenv("COLLECTION_NAME")
 
-    setup_collection.create_index(
-        [("title", "text"), ("text", "text")],
-        name="title_text_index",
-        default_language="english"
-    )
-    print("Text index 'title_text_index' ensured on 'cheeses' collection.")
-except OperationFailure as e:
-    if e.code == 85:
-        print(f"Could not create index 'title_text_index' due to conflict: {e.details['errmsg']}. Assuming functional index already exists.")
-    elif e.code == 86:
-        print(f"Could not create index 'title_text_index' due to key specs conflict: {e.details['errmsg']}. An index with the same name but different keys might exist.")
+    if not mongo_uri:
+        print("MongoDB setup error: MONGO_URI environment variable not set. Skipping index creation.")
+    elif not db_name_env:
+        print("MongoDB setup error: DB_NAME environment variable not set. Skipping index creation.")
+    elif not collection_name_env:
+        print("MongoDB setup error: COLLECTION_NAME environment variable not set. Skipping index creation.")
     else:
-        print(f"A MongoDB operation error occurred during index creation (Code {e.code}): {e.details['errmsg']}")
+        setup_client = MongoClient(mongo_uri)
+        setup_db = setup_client[db_name_env]
+        setup_collection = setup_db[collection_name_env]
+
+        print(f"Attempting to ensure text index 'title_text_index' on collection '{collection_name_env}' in database '{db_name_env}'...")
+        setup_collection.create_index(
+            [("title", "text"), ("text", "text")],
+            name="title_text_index",
+            default_language="english"
+        )
+        print("Text index 'title_text_index' ensured successfully.")
+except OperationFailure as e:
+    if e.code == 85: # IndexOptionsConflict
+        print(f"Could not create index 'title_text_index' due to conflict: {e.details.get('errmsg', 'Unknown error')}. Assuming functional index already exists.")
+    elif e.code == 86: # IndexKeySpecsConflict
+        print(f"Could not create index 'title_text_index' due to key specs conflict: {e.details.get('errmsg', 'Unknown error')}. An index with the same name but different keys might exist.")
+    else:
+        print(f"A MongoDB operation error occurred during index creation (Code {e.code}): {e.details.get('errmsg', 'Unknown error')}")
 except Exception as e:
     print(f"An unexpected error occurred during MongoDB index setup: {e}")
 finally:
-    if 'setup_client' in locals():
+    if 'setup_client' in locals() and setup_client is not None:
         setup_client.close()

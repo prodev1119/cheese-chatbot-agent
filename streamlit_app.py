@@ -1,4 +1,6 @@
 import os
+from PIL import Image
+from turtle import color
 import streamlit as st
 from agent.langgraph_agent import build_cheese_agent
 from agent.mongo_search import MongoCheeseSearch
@@ -26,13 +28,28 @@ mongo_search = MongoCheeseSearch(MONGO_URI, DB_NAME, COLLECTION_NAME)
 pinecone_search = PineconeCheeseSearch(PINECONE_API_KEY, None, PINECONE_INDEX, OPENAI_API_KEY)
 cheese_agent = build_cheese_agent(mongo_search, pinecone_search, OPENAI_API_KEY)
 
+# mermaid_code = cheese_agent.get_graph().draw_mermaid()
+# print(mermaid_code) # You can use this output with a Mermaid renderer to create graph.png
+
 # Set page config
 st.set_page_config(
     page_title="Cheese Chatbot Agent",
     page_icon="🧀",
-    # layout="wide"
+    # layout="wide" # Use wide layout to better accommodate sidebar
 )
-# --- Streamlit UI ---
+
+# --- Sidebar for Graph Display ---
+with st.sidebar:
+    st.header("Agent Workflow Graph")
+    try:
+        graph_image = Image.open("graph.png")
+        st.image(graph_image, use_container_width=True,)
+    except FileNotFoundError:
+        st.warning("graph.png not found. Please generate it from the Mermaid code printed in the console.")
+        # mermaid_code = cheese_agent.get_graph().draw_mermaid() # Regenerate if needed
+        # st.text_area("Mermaid Code (for graph.png)", mermaid_code, height=300)
+
+# --- Main Chat UI ---
 st.title("🧀 Cheese Chatbot Agent")
 st.write("Ask me anything about our cheese products!")
 
@@ -44,7 +61,7 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        
+
         # Display thinking log if it exists for this assistant message
         if message["role"] == "assistant" and "thinking_log" in message and message["thinking_log"]:
             with st.expander("Thinking Process"):
@@ -88,7 +105,7 @@ for message in st.session_state.messages:
                     st.write(f"Brand: {Brand}")
                     # st.write(f"Price Per LB: {PricePerLB}")
                     # st.write(f"Price Per CT: {PricePerCT}")
-                    # st.write(f"Each Price: {EachPrice}")
+                    st.write(f"Each Price: {EachPrice}")
                     # st.write(f"Case Price: {CasePrice}")
                     # st.write(f"Each Size: {EachSize}")
                     # st.write(f"Case Size: {CaseSize}")
@@ -138,8 +155,6 @@ if user_input:
             st.session_state.messages.append(assistant_message)
 
             with st.chat_message("assistant"):
-                st.markdown(final_response_text)
-                
                 # Display thinking_log for the current response
                 if current_thinking_log:
                     with st.expander("Thinking Process"):
@@ -147,6 +162,7 @@ if user_input:
                         for line in current_thinking_log:
                             st.markdown(f"`{line}`") # Using markdown for better formatting
 
+                st.markdown(final_response_text)
                 # Conditionally display products for the current response
                 if not is_aggregation_current and products_to_display:
                     with st.expander("View Details of All Products"):
@@ -182,7 +198,7 @@ if user_input:
                             st.write(f"Brand: {Brand}")
                             # st.write(f"Price Per LB: {PricePerLB}")
                             # st.write(f"Price Per CT: {PricePerCT}")
-                            # st.write(f"Each Price: {EachPrice}")
+                            st.write(f"Each Price: {EachPrice}")
                             # st.write(f"Case Price: {CasePrice}")
                             # st.write(f"Each Size: {EachSize}")
                             # st.write(f"Case Size: {CaseSize}")

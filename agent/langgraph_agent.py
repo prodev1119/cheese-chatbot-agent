@@ -22,12 +22,12 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
     def check_cheese_related_node(state: CheeseAgentState) -> dict:
         input_query = state['input']
         thinking_log = state.get("thinking_log", []) # Initialize or get existing log
-        
-        thinking_log.append("--- Step: Check if Query is Cheese-Related ---")
+
+        thinking_log.append("_____________________ Step: Check if Query is Cheese-Related _____________________")
         thinking_log.append(f"User Query: '{input_query}'")
-        
+
         prompt_content = f"Is the following query about cheese? Only respond with 'yes' or 'no': '{input_query}'"
-        thinking_log.append(f"LLM Prompt for cheese check: '{prompt_content}'")
+        # thinking_log.append(f"LLM Prompt for cheese check: '{prompt_content}'")
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -38,11 +38,11 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             max_tokens=10
         )
         raw_llm_response = response.choices[0].message.content.strip()
-        thinking_log.append(f"LLM Raw Response: '{raw_llm_response}'")
-        
+        # thinking_log.append(f"LLM Raw Response: '{raw_llm_response}'")
+
         is_cheese = "yes" in raw_llm_response.lower()
         thinking_log.append(f"Decision: Query is cheese-related = {is_cheese}")
-        thinking_log.append("-------------------------------------------------")
+        # thinking_log.append("--------------------------------------------------------------------")
 
         new_history = state.get("history", []) + ["check_cheese_related_node"]
         return {
@@ -56,11 +56,11 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
 
     def convert_to_mongo_query_node(state: CheeseAgentState) -> dict:
         thinking_log = state.get("thinking_log", [])
-        thinking_log.append("--- Step: Convert User Query to MongoDB Query ---")
+        thinking_log.append("____________________ Step: Convert User Query to MongoDB Query ____________________")
 
         if not state.get("is_cheese_related"):
             thinking_log.append("Decision: Skipped MongoDB query conversion (query not cheese-related).")
-            thinking_log.append("-----------------------------------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             new_history = state.get("history", []) + ["convert_to_mongo_query_node_skipped"]
             return {"history": new_history, "mongo_query": None, "is_aggregation_result": None, "thinking_log": thinking_log}
 
@@ -121,9 +121,9 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             example_type_search=examples['example_type_search']
         ).replace("  ", " ")
 
-        thinking_log.append(f"System Prompt for LLM (MongoDB query conversion - first 200 chars): {system_prompt[:200]}...")
+        # thinking_log.append(f"System Prompt for LLM (MongoDB query conversion - first 200 chars): {system_prompt[:200]}...")
         user_prompt_for_llm = f"Convert this cheese-related query to a MongoDB query: '{user_query_for_llm}'"
-        thinking_log.append(f"User Prompt for LLM (MongoDB query conversion): '{user_prompt_for_llm}'")
+        # thinking_log.append(f"User Prompt for LLM (MongoDB query conversion): '{user_prompt_for_llm}'")
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -134,8 +134,8 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             max_tokens=300
         )
         mongo_query_json_str = response.choices[0].message.content.strip()
-        thinking_log.append(f"LLM Raw Response (MongoDB Query JSON): '{mongo_query_json_str}'")
-        thinking_log.append("-----------------------------------------------------")
+        thinking_log.append(f"MongoDB Query JSON: '{mongo_query_json_str}'")
+        # thinking_log.append("--------------------------------------------------------------------")
 
         new_history = state.get("history", []) + ["convert_to_mongo_query_node"]
         return {"mongo_query": mongo_query_json_str, "history": new_history, "is_aggregation_result": None, "thinking_log": thinking_log}
@@ -145,17 +145,17 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         current_search_results = []
         is_aggregation = False # Default
         thinking_log = state.get("thinking_log", [])
-        thinking_log.append("--- Step: Search MongoDB ---")
-        thinking_log.append(f"Received MongoDB Query JSON from LLM: '{mongo_query_json_str}'")
+        thinking_log.append("_____________________________ Step: Search MongoDB _____________________________")
+        # thinking_log.append(f"Received MongoDB Query JSON: '{mongo_query_json_str}'")
 
         if not mongo_query_json_str:
             thinking_log.append("Decision: Skipped MongoDB search (no query string provided).")
             new_history = state.get("history", []) + ["mongo_search_node_skipped_no_query"]
-            thinking_log.append("--------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             return {"results": [], "history": new_history, "is_aggregation_result": False, "thinking_log": thinking_log}
 
         cleaned_json_str = mongo_query_json_str
-        thinking_log.append(f"Original JSON string for Mongo: '{mongo_query_json_str}'")
+        # thinking_log.append(f"Original JSON string for Mongo: '{mongo_query_json_str}'")
         match = re.match(r"^\s*```(?:json)?\s*([\s\S]+?)\s*```\s*$", cleaned_json_str, re.DOTALL)
         if match:
             cleaned_json_str = match.group(1).strip()
@@ -177,12 +177,12 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             current_search_results = search_output if isinstance(search_output, list) else [search_output] if search_output else []
             thinking_log.append(f"Fallback search results count: {len(current_search_results)}")
             thinking_log.append("Determination: Fallback search is NOT an aggregation.")
-            thinking_log.append("--------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             return {"results": current_search_results, "history": new_history, "is_aggregation_result": False, "thinking_log": thinking_log}
 
         try:
             query_input = json.loads(cleaned_json_str)
-            thinking_log.append(f"Successfully parsed JSON to Python object: {query_input}")
+            # thinking_log.append(f"Successfully parsed JSON to Python object: {query_input}")
 
             if isinstance(query_input, list):
                 is_aggregation = True
@@ -198,7 +198,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             thinking_log.append(f"MongoDB search executed. Results count: {len(current_search_results)}")
             # Limit logging of actual results to avoid huge logs
             results_summary_for_log = current_search_results[:2] if current_search_results else "No results"
-            thinking_log.append(f"MongoDB search results (first 2 or none): {json.dumps(results_summary_for_log, indent=2, default=str)}")
+            # thinking_log.append(f"MongoDB search results (first 2 or none): {json.dumps(results_summary_for_log, indent=2, default=str)}")
 
 
             # Refine is_aggregation based on typical aggregation result structure
@@ -228,18 +228,18 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
 
         thinking_log.append(f"Final Determination: Is aggregation result = {is_aggregation}")
         new_history = state.get("history", []) + ["mongo_search_node"]
-        thinking_log.append("--------------------------")
+        # thinking_log.append("--------------------------------------------------------------------")
         return {"results": current_search_results, "history": new_history, "is_aggregation_result": is_aggregation, "thinking_log": thinking_log}
 
     def pinecone_search_node(state: CheeseAgentState) -> dict: # Pinecone always returns products, not aggregation
         query = state["input"]
         thinking_log = state.get("thinking_log", [])
-        thinking_log.append("--- Step: Search Pinecone (Vector Search) ---")
+        thinking_log.append("____________________ Step: Search Pinecone (Vector Search) ____________________")
         thinking_log.append(f"Original User Query for Pinecone: '{query}'")
 
         # pinecone_search.vector_search now returns (results, pinecone_log_entries)
         search_output, pinecone_log_entries = pinecone_search.vector_search(query)
-        
+
         if pinecone_log_entries:
             thinking_log.extend(pinecone_log_entries) # Add Pinecone's internal log
 
@@ -249,7 +249,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         thinking_log.append(f"Pinecone search results (first 2 or none): {json.dumps(results_summary_for_log, indent=2, default=str)}")
 
         new_history = state.get("history", []) + ["pinecone_search_node"]
-        thinking_log.append("-------------------------------------------")
+        # thinking_log.append("--------------------------------------------------------------------")
         return {"results": current_search_results, "history": new_history, "is_aggregation_result": False, "thinking_log": thinking_log}
 
     def generate_response_node(state: CheeseAgentState) -> dict:
@@ -261,15 +261,15 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         history = state.get("history", [])
         thinking_log = state.get("thinking_log", [])
 
-        thinking_log.append("--- Step: Generate Final Response ---")
+        thinking_log.append("________________________ Step: Generate Final Response ________________________")
         thinking_log.append(f"Input User Query: '{input_query}'")
         thinking_log.append(f"Is Cheese-Related Flag: {is_cheese}")
-        thinking_log.append(f"MongoDB Query Generated by LLM: '{mongo_query_generated_str}'")
+        thinking_log.append(f"MongoDB Query: '{mongo_query_generated_str}'")
         thinking_log.append(f"Is Aggregation Result Flag: {is_aggregation_res}")
         thinking_log.append(f"Number of products/results received: {len(results)}")
         # Limit logging of actual results
         results_summary_for_log = results[:2] if results else "No results"
-        thinking_log.append(f"Products/Results (first 2 or none): {json.dumps(results_summary_for_log, indent=2, default=str)}")
+        # thinking_log.append(f"Products/Results (first 2 or none): {json.dumps(results_summary_for_log, indent=2, default=str)}")
         thinking_log.append(f"Node History: {history}")
 
         prompt_parts = [f"User query: '{input_query}'."]
@@ -342,7 +342,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             thinking_log.append("- Scenario: Cheese-related status undetermined. Prompting LLM for cautious response.")
 
         final_llm_user_prompt = "\n".join(prompt_parts)
-        thinking_log.append(f"Final User-Role Prompt for LLM (first 300 chars): {final_llm_user_prompt[:300]}...")
+        # thinking_log.append(f"Final User-Role Prompt for LLM (first 300 chars): {final_llm_user_prompt[:300]}...")
         system_prompt_for_final_llm = ("You are a helpful cheese assistant. Synthesize the information provided into a concise, helpful, and easy-to-read answer. "
                                        "Ensure proper formatting and spacing. If results are a direct answer to a question (like a count), state it clearly. "
                                        "If results are products, list the examples if appropriate."
@@ -357,7 +357,8 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         llm_final_response = client.chat.completions.create(
             model="gpt-4o", messages=llm_final_response_messages, max_tokens=500
         ).choices[0].message.content.strip()
-        thinking_log.append(f"LLM Raw Final Response: {llm_final_response}")
+        # thinking_log.append(f"LLM Raw Final Response: {llm_final_response}")
+        thinking_log.append(f"LLM Raw Final Response is generated!")
         
         current_history = state.get("history", []) 
         new_history = current_history + ["generate_response_node"]
@@ -367,7 +368,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             final_results_for_streamlit = [] 
             thinking_log.append("Clearing product results for Streamlit display because it was an aggregation result.")
 
-        thinking_log.append("--- End of Generate Final Response ---")
+        thinking_log.append("~~~~~~~~~~~~~~~~~~~~~~~~ End of Generate Final Response ~~~~~~~~~~~~~~~~~~~~~~~~")
         return {
             "final_response": llm_final_response, 
             "history": new_history, 
@@ -379,30 +380,30 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
     # Routing functions
     def route_after_check_cheese(state: CheeseAgentState) -> Literal["convert_to_mongo_query", "generate_response"]:
         thinking_log = state.get("thinking_log", [])
-        thinking_log.append("--- Routing Decision: After Check Cheese ---")
+        thinking_log.append("------------------- Routing Decision: After Check Cheese -------------------")
         if state.get("is_cheese_related"):
             decision = "convert_to_mongo_query"
             thinking_log.append(f"Query is cheese-related. Routing to: {decision}")
-            thinking_log.append("-------------------------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             return decision
         else:
             decision = "generate_response"
             thinking_log.append(f"Query is NOT cheese-related. Routing to: {decision}")
-            thinking_log.append("-------------------------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             return decision
 
     def route_after_mongo_search(state: CheeseAgentState) -> Literal["pinecone_search", "generate_response"]:
         thinking_log = state.get("thinking_log", [])
-        thinking_log.append("--- Routing Decision: After MongoDB Search ---")
+        thinking_log.append("------------------- Routing Decision: After MongoDB Search -------------------")
         if state.get("results") and len(state.get("results", [])) > 0:
             decision = "generate_response"
             thinking_log.append(f"MongoDB found results ({len(state.get("results", []))}). Routing to: {decision}")
-            thinking_log.append("-------------------------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             return decision
         else:
             decision = "pinecone_search"
             thinking_log.append("MongoDB found no results. Routing to: {decision}")
-            thinking_log.append("-------------------------------------------")
+            # thinking_log.append("--------------------------------------------------------------------")
             return decision
 
     graph = StateGraph(CheeseAgentState)
