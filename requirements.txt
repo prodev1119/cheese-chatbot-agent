@@ -1,6 +1,6 @@
 langgraph
 openai
-pinecone-client
+pinecone
 pymongo
 python-dotenv
 streamlit
