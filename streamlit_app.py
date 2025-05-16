@@ -5,6 +5,7 @@ from agent.langgraph_agent import build_cheese_agent
 from agent.mongo_search import MongoCheeseSearch
 from agent.pinecone_search import PineconeCheeseSearch
 from dotenv import load_dotenv
+import uuid
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ mongo_search = MongoCheeseSearch(MONGO_URI, DB_NAME, COLLECTION_NAME)
 pinecone_search = PineconeCheeseSearch(PINECONE_API_KEY, None, PINECONE_INDEX, OPENAI_API_KEY)
 cheese_agent = build_cheese_agent(mongo_search, pinecone_search, OPENAI_API_KEY)
 
-# mermaid_code = cheese_agent.get_graph().draw_mermaid()
+mermaid_code = cheese_agent.get_graph().draw_mermaid()
 # print(mermaid_code) # You can use this output with a Mermaid renderer to create graph.png
 
 # Set page config
@@ -55,6 +56,10 @@ st.write("Ask me anything about our cheese products!")
 # Initialize chat history in session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "thread_id" not in st.session_state:
+    # Create a unique thread_id for the session, or load if you have persistence for it
+    st.session_state.thread_id = str(uuid.uuid4())
+    print(f"New session started with thread_id: {st.session_state.thread_id}")
 
 # Display chat messages from history
 for message in st.session_state.messages:
@@ -63,7 +68,7 @@ for message in st.session_state.messages:
 
         # Display thinking log if it exists for this assistant message
         if message["role"] == "assistant" and "thinking_log" in message and message["thinking_log"]:
-            with st.expander("Thinking Process"):
+            with st.expander("Reasoning Process"):
                 #st.text_area("Reasoning Steps", "\n".join(message["thinking_log"]), height=300, disabled=True)
                 for line in message["thinking_log"]:
                     st.markdown(f"`{line}`") # Using markdown for better formatting, or st.text for plain
@@ -127,43 +132,85 @@ if user_input:
 
     with st.spinner("🧀 Thinking..."):
         # Define the initial state for the agent according to CheeseAgentState
-        initial_agent_state = {
-            "input": user_input,
+        # Start with defaults
+        agent_state_for_invoke = {
+            "input": user_input, # This is the current text from the user
             "results": [],
             "is_cheese_related": None,
             "mongo_query": None,
             "final_response": None,
-            "history": [],
-            "thinking_log": [] # Initialize thinking_log
+            "history": [], # History is managed by LangGraph checkpointer across invokes for the same thread_id
+            "thinking_log": [], # New log for this specific invoke/resume
+            "original_input": None,
+            "current_task_input": None, 
+            "pending_tasks_description": None,
+            "clarification_prompt_for_user": None,
+            "is_awaiting_hitl_response": False,
+            "hitl_resume_data": None
         }
 
+        # If the last message was an assistant message that set up HITL, carry over relevant state
+        if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
+            last_assistant_message = st.session_state.messages[-1]
+            if last_assistant_message.get("is_awaiting_hitl_response"):
+                agent_state_for_invoke["is_awaiting_hitl_response"] = True
+                agent_state_for_invoke["original_input"] = last_assistant_message.get("original_input")
+                # current_task_input for resuming will be set by preprocess from user_input containing yes/no
+                agent_state_for_invoke["pending_tasks_description"] = last_assistant_message.get("pending_tasks_description")
+                agent_state_for_invoke["clarification_prompt_for_user"] = last_assistant_message.get("clarification_prompt_for_user")
+                # `hitl_resume_data` will be set from `user_input` by `preprocess_input_and_detect_multitask_node`
+
+        # Config for checkpointer (e.g., thread_id)
+        config = {"configurable": {"thread_id": st.session_state.thread_id}}
+
         try:
-            # Invoke the agent
-            result_state = cheese_agent.invoke(initial_agent_state)
+            result_state = cheese_agent.invoke(agent_state_for_invoke, config=config)
 
             final_response_text = result_state.get("final_response", "Sorry, I couldn't process that.")
             products_to_display = result_state.get("results", [])
             is_aggregation_current = result_state.get("is_aggregation_result", False)
-            current_thinking_log = result_state.get("thinking_log", []) # Get the thinking log
+            current_thinking_log = result_state.get("thinking_log", [])
+            # Check if agent is now awaiting HITL for the *next* turn
+            now_awaiting_hitl = result_state.get("is_awaiting_hitl_response", False)
+            clarification_q = result_state.get("clarification_prompt_for_user")
+
+            # The final_response_text might be the clarification question itself if HITL is triggered
+            if now_awaiting_hitl and clarification_q:
+                # The agent has asked a clarification question and is paused.
+                # final_response_text is already set to clarification_q by the HITL node.
+                st.session_state.is_agent_paused = True # Custom flag for UI hints
+            else:
+                st.session_state.is_agent_paused = False
 
             assistant_message = {"role": "assistant", "content": final_response_text}
-            if not is_aggregation_current and products_to_display:
+            if not is_aggregation_current and products_to_display and not now_awaiting_hitl:
+                # Only show products if not an aggregation AND not currently a clarification question turn
                 assistant_message["products"] = products_to_display
+            
             assistant_message["is_aggregation_result"] = is_aggregation_current
-            assistant_message["thinking_log"] = current_thinking_log # Store thinking log
+            assistant_message["thinking_log"] = current_thinking_log
+            # Persist key HITL state for next turn if agent paused
+            if now_awaiting_hitl:
+                assistant_message["is_awaiting_hitl_response"] = True
+                assistant_message["clarification_prompt_for_user"] = clarification_q
+                assistant_message["original_input"] = result_state.get("original_input")
+                assistant_message["current_task_input"] = result_state.get("current_task_input")
+                assistant_message["pending_tasks_description"] = result_state.get("pending_tasks_description")
+            
             st.session_state.messages.append(assistant_message)
 
             with st.chat_message("assistant"):
                 # Display thinking_log for the current response
                 if current_thinking_log:
-                    with st.expander("Thinking Process"):
+                    with st.expander("Reasoning Process"):
                         #st.text_area("Reasoning Steps", "\n".join(current_thinking_log), height=300, disabled=True)
                         for line in current_thinking_log:
                             st.markdown(f"`{line}`") # Using markdown for better formatting
 
                 st.markdown(final_response_text)
                 # Conditionally display products for the current response
-                if not is_aggregation_current and products_to_display:
+                # Do not show "View Details" if it's a clarification question being asked
+                if not is_aggregation_current and products_to_display and not now_awaiting_hitl:
                     with st.expander("View Details of All Products"):
                         for cheese in products_to_display:
                             title = cheese.get("title", "No Title")
