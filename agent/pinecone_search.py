@@ -18,6 +18,9 @@ class PineconeCheeseSearch:
         return response.data[0].embedding
 
     def vector_search(self, original_query):
+        node_thinking_log = [] # Initialize log for this specific search
+        node_thinking_log.append(f"Pinecone Search: Original User Query for enhancement: '{original_query}'")
+
         # Use LLM to refine the query for better semantic search
         try:
             llm_enhanced_query_prompt = (
@@ -39,11 +42,15 @@ class PineconeCheeseSearch:
                 temperature=0.5 # Slightly creative but still focused
             )
             enhanced_query = response.choices[0].message.content.strip()
-            print(f"Original Pinecone query: '{original_query}', LLM Enhanced query: '{enhanced_query}'")
+            node_thinking_log.append(f"Pinecone Search: LLM-enhanced query: '{enhanced_query}'")
+            node_thinking_log.append(f"Pinecone Search: LLM prompt for enhancement (first 200 chars): {llm_enhanced_query_prompt[:200]}...")
+            node_thinking_log.append(f"Pinecone Search: LLM raw response for enhancement: '{enhanced_query}'")
+
         except Exception as e:
-            print(f"Error enhancing query with LLM: {e}. Falling back to original query.")
+            node_thinking_log.append(f"Pinecone Search: Error enhancing query with LLM: {e}. Falling back to original query.")
             enhanced_query = original_query
 
+        node_thinking_log.append(f"Pinecone Search: Final query for embedding: '{enhanced_query}'")
         vector = self.embed_query(enhanced_query)
         query_response = self.index.query(vector=vector, top_k=5, include_metadata=True)
 
@@ -52,10 +59,7 @@ class PineconeCheeseSearch:
         if query_response and query_response.get('matches'):
             for match in query_response['matches']:
                 if match.get('metadata'):
-                    # Optionally, you can include the score if needed by the app
-                    # metadata = match['metadata']
-                    # metadata['score'] = match['score']
-                    # results_with_metadata.append(metadata)
                     results_with_metadata.append(match['metadata'])
-                # else: metadata is missing for this match, skip or add placeholder
-        return results_with_metadata
+        
+        node_thinking_log.append(f"Pinecone Search: Found {len(results_with_metadata)} results.")
+        return results_with_metadata, node_thinking_log # Return both results and the log

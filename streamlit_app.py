@@ -44,8 +44,15 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        
+        # Display thinking log if it exists for this assistant message
+        if message["role"] == "assistant" and "thinking_log" in message and message["thinking_log"]:
+            with st.expander("Thinking Process"):
+                #st.text_area("Reasoning Steps", "\n".join(message["thinking_log"]), height=300, disabled=True)
+                for line in message["thinking_log"]:
+                    st.markdown(f"`{line}`") # Using markdown for better formatting, or st.text for plain
+
         # If products were associated with this assistant message, display them
-        # Check if it was an aggregation result for historical messages
         is_aggregation_history = message.get("is_aggregation_result", False)
         if not is_aggregation_history and "products" in message and message["products"]:
             with st.expander("View Details of All Products"):
@@ -110,7 +117,8 @@ if user_input:
             "is_cheese_related": None,
             "mongo_query": None,
             "final_response": None,
-            "history": []
+            "history": [],
+            "thinking_log": [] # Initialize thinking_log
         }
 
         try:
@@ -120,17 +128,25 @@ if user_input:
             final_response_text = result_state.get("final_response", "Sorry, I couldn't process that.")
             products_to_display = result_state.get("results", [])
             is_aggregation_current = result_state.get("is_aggregation_result", False)
+            current_thinking_log = result_state.get("thinking_log", []) # Get the thinking log
 
             assistant_message = {"role": "assistant", "content": final_response_text}
-            # Only store products if not an aggregation and products exist
             if not is_aggregation_current and products_to_display:
                 assistant_message["products"] = products_to_display
-            # Store the aggregation flag for accurate historical display
             assistant_message["is_aggregation_result"] = is_aggregation_current
+            assistant_message["thinking_log"] = current_thinking_log # Store thinking log
             st.session_state.messages.append(assistant_message)
 
             with st.chat_message("assistant"):
                 st.markdown(final_response_text)
+                
+                # Display thinking_log for the current response
+                if current_thinking_log:
+                    with st.expander("Thinking Process"):
+                        #st.text_area("Reasoning Steps", "\n".join(current_thinking_log), height=300, disabled=True)
+                        for line in current_thinking_log:
+                            st.markdown(f"`{line}`") # Using markdown for better formatting
+
                 # Conditionally display products for the current response
                 if not is_aggregation_current and products_to_display:
                     with st.expander("View Details of All Products"):

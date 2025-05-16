@@ -1,7 +1,7 @@
 import json
 from pymongo import MongoClient
 
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient('mongodb+srv://actordev1119:Qw2VzuHSCFyy3agf@cluster0.umwamln.mongodb.net/')
 db = client['cheese_db']
 collection = db['cheeses']
 
