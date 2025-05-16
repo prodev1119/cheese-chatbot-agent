@@ -156,7 +156,7 @@ if user_input:
                 assistant_message["products"] = products_to_display
             assistant_message["is_aggregation_result"] = is_aggregation_current
             assistant_message["thinking_log"] = current_thinking_log # Store thinking log
-            st.session_state.messages.append(assistant_message)
+            # st.session_state.messages.append(assistant_message)
 
             with st.chat_message("assistant"):
                 # Display thinking_log for the current response
