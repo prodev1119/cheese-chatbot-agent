@@ -348,7 +348,6 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
                                        "If results are products, list the examples if appropriate."
                                        "Do not run words together."
                                        "In addition, note that 27 cheese products are out of stock at the moment. If user ask about this, answer that 27 cheese products are out of stock at the moment."
-                                       "And if the user's query is like 'Give me cheese products that I like?', ask user to specify the type of cheese they like. after user answer, give them the list of cheese products that they like."
                                        )
         thinking_log.append(f"Final System-Role Prompt for LLM: {system_prompt_for_final_llm}")
 
