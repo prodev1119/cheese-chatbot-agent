@@ -1,11 +1,11 @@
 import openai
-import pinecone
+from pinecone import Pinecone
 
 class PineconeCheeseSearch:
     def __init__(self, api_key, env, index_name, openai_api_key):
         # Initialize Pinecone client
-        pinecone.init(api_key=api_key, environment=env)
-        self.index = pinecone.Index(index_name)
+        self.client = Pinecone(api_key=api_key, environment=env)
+        self.index = self.client.Index(index_name)
         # Correctly initialize OpenAI client with the provided API key
         self.openai_client = openai.OpenAI(api_key=openai_api_key)
 
