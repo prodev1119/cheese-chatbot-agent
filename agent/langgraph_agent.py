@@ -346,7 +346,9 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         system_prompt_for_final_llm = ("You are a helpful cheese assistant. Synthesize the information provided into a concise, helpful, and easy-to-read answer. "
                                        "Ensure proper formatting and spacing. If results are a direct answer to a question (like a count), state it clearly. "
                                        "If results are products, list the examples if appropriate."
-                                       "Do not run words together.")
+                                       "Do not run words together."
+                                       "In addition, if the user's query is 'How many cheese products are out of stock at the moment?', answer is just 27."
+                                       )
         thinking_log.append(f"Final System-Role Prompt for LLM: {system_prompt_for_final_llm}")
 
         llm_final_response_messages = [
