@@ -301,14 +301,14 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
                 elif last_search_node == "pinecone_search_node":
                     prompt_parts.append(f"MongoDB found no results (derived query: '{mongo_query_generated_str}'). Pinecone Vector Search then found {len(results)} product(s) based on the original query.")
                     thinking_log.append(f"- Determined: Results from Pinecone ({len(results)} products) after MongoDB found none.")
-                else: 
+                else:
                     prompt_parts.append(f"Found {len(results)} product(s).")
                     thinking_log.append(f"- Determined: Results found ({len(results)} products), source unclear from history (should be mongo or pinecone).")
-                
+
                 prompt_parts.append("Based on these products, generate a helpful response. List a few examples if appropriate.")
                 MAX_RESULTS_IN_PROMPT = 5 # Reduced slightly for thinking log brevity
                 results_for_prompt = results[:MAX_RESULTS_IN_PROMPT]
-                try: 
+                try:
                     prompt_parts.append(json.dumps(results_for_prompt, indent=2))
                     thinking_log.append(f"- Added {len(results_for_prompt)} product examples to LLM prompt.")
                 except TypeError as te:
@@ -333,7 +333,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
                     prompt_parts.append(f"Searched MongoDB (derived query from LLM: '{mongo_query_generated_str}') but found no relevant cheese products. Pinecone search was not attempted as per workflow (this path means Mongo should have results or Pinecone is next). This specific scenario of no mongo results and no pinecone search should be rare if routing is correct, but handle gracefully.")
                     prompt_parts.append(f"Inform the user that no products for '{input_query}' were found. You can ask for clarification or suggest they rephrase.")
                     thinking_log.append("- Scenario: No results after MongoDB (and Pinecone not attempted). Prompting LLM to inform user and ask for clarification.")
-                else: 
+                else:
                     prompt_parts.append("No search results are available for this cheese query after attempting searches.")
                     prompt_parts.append(f"Politely inform the user that you couldn't find information for '{input_query}'. You can ask if they want to try a different query.")
                     thinking_log.append("- Scenario: No results, search path unclear. Prompting LLM to inform user and ask for different query.")
@@ -344,10 +344,10 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         final_llm_user_prompt = "\n".join(prompt_parts)
         # thinking_log.append(f"Final User-Role Prompt for LLM (first 300 chars): {final_llm_user_prompt[:300]}...")
         system_prompt_for_final_llm = ("You are a helpful cheese assistant. Synthesize the information provided into a concise, helpful, and easy-to-read answer. "
-                                       "Ensure proper formatting and spacing. If results are a direct answer to a question (like a count), state it clearly. "
-                                       "If results are products, list the examples if appropriate."
-                                       "Do not run words together."
-                                       )
+                                    "Ensure proper formatting and spacing. If results are a direct answer to a question (like a count), state it clearly. "
+                                    "If results are products, list the examples if appropriate."
+                                    "Do not run words together."
+                                    )
         thinking_log.append(f"Final System-Role Prompt for LLM: {system_prompt_for_final_llm}")
 
         llm_final_response_messages = [
@@ -360,20 +360,20 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
         ).choices[0].message.content.strip()
         # thinking_log.append(f"LLM Raw Final Response: {llm_final_response}")
         thinking_log.append(f"LLM Raw Final Response is generated!")
-        
-        current_history = state.get("history", []) 
+
+        current_history = state.get("history", [])
         new_history = current_history + ["generate_response_node"]
 
         final_results_for_streamlit = results
         if is_aggregation_res:
-            final_results_for_streamlit = [] 
+            final_results_for_streamlit = []
             thinking_log.append("Clearing product results for Streamlit display because it was an aggregation result.")
 
         thinking_log.append("~~~~~~~~~~~~~~~~~~~~~~~~ End of Generate Final Response ~~~~~~~~~~~~~~~~~~~~~~~~")
         return {
-            "final_response": llm_final_response, 
-            "history": new_history, 
-            "results": final_results_for_streamlit, 
+            "final_response": llm_final_response,
+            "history": new_history,
+            "results": final_results_for_streamlit,
             "is_aggregation_result": is_aggregation_res,
             "thinking_log": thinking_log
         }
