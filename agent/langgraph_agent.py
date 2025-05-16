@@ -306,7 +306,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
                     thinking_log.append(f"- Determined: Results found ({len(results)} products), source unclear from history (should be mongo or pinecone).")
                 
                 prompt_parts.append("Based on these products, generate a helpful response. List a few examples if appropriate.")
-                MAX_RESULTS_IN_PROMPT = 3 # Reduced slightly for thinking log brevity
+                MAX_RESULTS_IN_PROMPT = 5 # Reduced slightly for thinking log brevity
                 results_for_prompt = results[:MAX_RESULTS_IN_PROMPT]
                 try: 
                     prompt_parts.append(json.dumps(results_for_prompt, indent=2))
