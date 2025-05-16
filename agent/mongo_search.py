@@ -82,9 +82,9 @@ class MongoCheeseSearch:
 
 # One-time setup or ensure index exists
 try:
-    setup_client = MongoClient(os.getenv("MONGO_URI", "mongodb://localhost:27017/"))
-    setup_db = setup_client[os.getenv("DB_NAME", "cheese_db")]
-    setup_collection = setup_db[os.getenv("COLLECTION_NAME", "cheeses")]
+    setup_client = MongoClient(os.getenv("MONGO_URI"))
+    setup_db = setup_client[os.getenv("DB_NAME")]
+    setup_collection = setup_db[os.getenv("COLLECTION_NAME")]
 
     setup_collection.create_index(
         [("title", "text"), ("text", "text")],
