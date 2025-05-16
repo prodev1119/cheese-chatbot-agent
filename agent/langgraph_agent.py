@@ -48,9 +48,9 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             "You are a helpful assistant that converts a user's query to a MongoDB query. MongoDB data is about Cheese products. "
             "CRITICAL: Output ONLY the raw MongoDB query as a valid JSON string. NO MARKDOWN, NO SINGLE QUOTES WRAPPING THE JSON, NO EXPLANATIONS. "
             "The output must be directly parsable by a JSON loader. "
-            "1. For simple filtering, text searches, or when specific fields are mentioned for retrieval (e.g., 'show me all cheddar cheese', 'cheddar cheese under $5'), use a find query structure (a JSON object). "
-            "   - For text searches: {example_text_search}. "
-            "   - For exact field matches: {example_field_match}. "
+            "1. For simple filtering, text searches, or when specific fields are mentioned for retrieval (e.g., 'show me all sliced cheese', 'sliced cheese under $5'), use a find query structure (a JSON object). "
+            "   - For text searches (e.g., blue cheese): {example_text_search}. "
+            "   - For exact field matches (e.g., show me all sliced cheese): {example_field_match}. "
             "   - For comparisons (e.g., price less than 50): {example_comparison_query}. "
             "2. If the query implies sorting or limiting specific documents (e.g., 'most popular cheese', 'cheapest 5 cheeses'), use the find query structure with '$query', '$orderby', and '$limit' keys (a JSON object). "
             "   - Example for 'most popular cheese': {example_most_popular}. "
@@ -59,7 +59,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             "   - Example for 'how many brands of cheese do you have?': {example_count_distinct_brands}. "
             "   - Example for 'how many cheese products in total?': {example_total_count}. "
             "4. If the query is for a specific cheese type (e.g., 'Cheddar', 'Goat Cheese', 'Brie'), create a query to recommend cheese products with content same as the type of cheese of the user's query"
-            "   - Example for 'can you show me all goat cheese?': {example_goat_search}. "
+            "   - Example for 'can you show me all goat cheese?': {example_type_search}. "
             "MongoDB Data fields: title, text, each_price (price of one item), brand, category, "
             "priceOrder (integer, higher value is CHEAPER, lower value is MORE EXPENSIVE), "
             "popularityOrder (integer, higher value is MORE POPULAR)."
@@ -67,14 +67,14 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
 
         examples = {
             "example_text_search": '{\"$text\": {\"$search\": \"blue cheese\"}}',
-            "example_field_match": '{\"$text\": {\"$search\": \"cheddar\"}}',
+            "example_field_match": '{\"category\": \"Sliced Cheese\"}',
             "example_comparison_query": '{\"each_price\": {\"$lt\": 50}}',
             "example_most_popular": '{\"$query\": {}, \"$orderby\": {\"popularityOrder\": -1}, \"$limit\": 1}',
             "cheapest_cheese_query": '{\"$query\": {}, \"$orderby\": {\"priceOrder\": -1}, \"$limit\": 1}',
             "most_expensive_10_query": '{\"$query\": {}, \"$orderby\": {\"priceOrder\": 1}, \"$limit\": 10}',
             "example_count_distinct_brands": '[{\"$group\": {\"_id\": \"$brand\"}}, {\"$count\": \"unique_brands\"}]',
             "example_total_count": '[{\"$count\": \"total_products\"}]',
-            "example_goat_search": '{\"$text\": {\"$search\": \"goat\"}}'
+            "example_type_search": '{\"$text\": {\"$search\": \"goat\"}}'
         }
 
         price_logic_str = ""
@@ -95,7 +95,7 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
             price_logic_placeholder=price_logic_str,
             example_count_distinct_brands=examples['example_count_distinct_brands'],
             example_total_count=examples['example_total_count'],
-            example_goat_search=examples['example_goat_search']
+            example_type_search=examples['example_type_search']
         ).replace("  ", " ")
 
         response = client.chat.completions.create(
