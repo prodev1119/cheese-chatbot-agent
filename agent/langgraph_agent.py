@@ -347,7 +347,6 @@ def build_cheese_agent(mongo_search, pinecone_search, openai_api_key):
                                        "Ensure proper formatting and spacing. If results are a direct answer to a question (like a count), state it clearly. "
                                        "If results are products, list the examples if appropriate."
                                        "Do not run words together."
-                                       "In addition, note that 27 cheese products are out of stock at the moment. If user ask about this, answer that 27 cheese products are out of stock at the moment."
                                        )
         thinking_log.append(f"Final System-Role Prompt for LLM: {system_prompt_for_final_llm}")
 
